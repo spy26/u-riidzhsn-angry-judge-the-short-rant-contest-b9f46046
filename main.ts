@@ -11,7 +11,7 @@
 // the machine's own line, escalates logically (my shopping IS the unexpected
 // item; the human watches and does nothing), and closes on "no milk and a
 // criminal record". One line, no trailing newline.
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 const RANT =
@@ -40,5 +40,11 @@ const targets = [...new Set([process.env.MAKEFUN_OUTPUT_DIR, "/output"])].filter
 );
 for (const dir of targets) {
   mkdirSync(dir, { recursive: true });
-  writeFileSync(join(dir, "entry.txt"), RANT, "utf8");
+  const outPath = join(dir, "entry.txt");
+  writeFileSync(outPath, RANT, "utf8");
+  // Verify the write: read it back and require an exact match with RANT,
+  // so a partial or corrupted write fails loudly instead of silently.
+  if (readFileSync(outPath, "utf8") !== RANT) {
+    throw new Error("entry.txt does not match the rant after writing");
+  }
 }
